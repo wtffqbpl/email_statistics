@@ -17,7 +17,7 @@ Check your email and send results to your specified email.
         <td>参数含义</td> 
    </tr>
    <tr>
-        <td rowspan="7">mailaccountinfo</td> 
+        <td rowspan="8">mailaccountinfo</td> 
         <td>imaphostname</td> 
         <td> 发送每日工作邮箱的imap服务器地址。其中，平时使用的两个邮箱imap地址如下所示 腾讯企业邮箱：imap.exmail.qq.com阿里企业邮箱：imap.mxhichina.com
 </td> 
