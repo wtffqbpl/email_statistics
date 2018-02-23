@@ -64,7 +64,7 @@ class WorkTimeModule:
             self.__output_filename = "output.csv"
             self.__output_file_hdl = file(self.__output_filename, "w")
             self.__write_results("Employee", "Time", "Mail subject", "Counts")
-        except Exception as e:
+        except Exception, e:
             print(e)
             return 0
 
