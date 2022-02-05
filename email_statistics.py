@@ -115,12 +115,11 @@ class ConfigInfo:
 class WorkTimeModule:
     def __init__(self, confile=None):
         self._config_info = ConfigInfo(confile)
-        self.__hostname = None
-        self.__username = None
-        self.__password = None
+        self.__output_filename = "output.csv"
+        self.__output_file_hdl = open(self.__output_filename, 'w')
+        self.__write_results('Employee', 'Time', 'Mail subject', 'Counts')
 
     def processing(self):
-        self.__get_param()
         self.__get_mail()
         if self._config_info.is_send_email:
             logging.info('Send info to specified email.')
@@ -151,16 +150,6 @@ class WorkTimeModule:
                        'smtp_info': smtp_info,
                        'mail_info': mail_info}
         return json.dumps(config_info)
-
-    def __get_param(self):
-        logging.info("Get configuration info.")
-        try:
-            # file handler.
-            self.__output_filename = "output.csv"
-            self.__output_file_hdl = file(self.__output_filename, "w")
-            self.__write_results("Employee", "Time", "Mail subject", "Counts")
-        except Exception as e:
-            logging.critical(e)
 
     def __my_unicode(self, s, encoding):
         if encoding:
