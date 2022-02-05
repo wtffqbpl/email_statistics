@@ -114,46 +114,47 @@ class ConfigInfo:
 
 class WorkTimeModule:
     def __init__(self, confile=None):
-        self.__confile = confile
-        self.__timelist = list()
-        self.__dayrange = list()
-        self.__employeelist = list()
+        self._config_info = ConfigInfo(confile)
         self.__hostname = None
-        self.__smtphostname = None
         self.__username = None
         self.__password = None
 
     def processing(self):
         self.__get_param()
         self.__get_mail()
-        if self.__sendmail == "True":
+        if self._config_info.is_send_email:
             logging.info('Send info to specified email.')
             self.__send_mail()
 
+    def __str__(self):
+        imap_info, smtp_info, mail_info = {}, {}, {}
+
+        # imap info
+        imap_info['hostname'] = self._config_info.imap_hostname
+        imap_info['username'] = self._config_info.imap_username
+        imap_info['password'] = self._config_info.imap_password
+
+        # smtp info
+        smtp_info['hostname'] = self._config_info.smtp_hostname
+        smtp_info['username'] = self._config_info.smtp_username
+        smtp_info['password'] = self._config_info.smtp_password
+
+        # mail info
+        mail_info['mail_folder'] = self._config_info.mail_folder
+        mail_info['employee_list'] = self._config_info.employee_list
+        mail_info['receivers_list'] = self._config_info.receivers_list
+        mail_info['time_range'] = self._config_info.time_list
+        mail_info['day_range'] = self._config_info.day_range
+        mail_info['is_send'] = self._config_info.is_send_email
+
+        config_info = {'imap_info': imap_info,
+                       'smtp_info': smtp_info,
+                       'mail_info': mail_info}
+        return json.dumps(config_info)
+
     def __get_param(self):
-        if self.__confile == None:
-            logging.fatal('No configuration file.')
-            return
-
         logging.info("Get configuration info.")
-        config = configparser.ConfigParser()
         try:
-            config.read([os.path.expanduser(self.__confile)])
-            self.__imaphostname = config.get('mailaccountinfo', 'imaphostname')
-            self.__imapusername = config.get('mailaccountinfo', 'imapusername')
-            self.__imappassword = config.get('mailaccountinfo', 'imappassword')
-            self.__smtphostname = config.get('mailaccountinfo', 'smtphostname')
-            self.__smtpusername = config.get('mailaccountinfo', 'smtpusername')
-            self.__smtppassword = config.get('mailaccountinfo', 'smtppassword')
-            self.__mailfolder = config.get('mailaccountinfo', 'mailfolder')
-            self.__employeelist = config.get('employees', 'namelist').split(",")
-            self.__mailtolist = config.get('mailtolist', 'namelist').split(",")
-            self.__timelist.append(config.get('time', 'time1'))
-            self.__timelist.append(config.get('time', 'time2'))
-            self.__dayrange.append(config.get('time', 'day_start'))
-            self.__dayrange.append(config.get('time', 'day_end'))
-            self.__sendmail = config.get('sendmail', 'sendmail')
-
             # file handler.
             self.__output_filename = "output.csv"
             self.__output_file_hdl = file(self.__output_filename, "w")
@@ -172,13 +173,13 @@ class WorkTimeModule:
 
     def __get_mail(self, port=993, ssl=1):  # 获取邮件
         if ssl == 1:
-            imap_server = imaplib.IMAP4_SSL(self.__imaphostname, port)
+            imap_server = imaplib.IMAP4_SSL(self._config_info.imap_hostname, port)
         else:
-            imap_server = imaplib.IMAP4(self.__imaphostname, port)
+            imap_server = imaplib.IMAP4(self._config_info.imap_hostname, port)
 
         logging.info('Login email.')
-        imap_server.login(self.__imapusername, self.__imappassword)
-        s = imap_server.select(self.__mailfolder)
+        imap_server.login(self._config_info.imap_username, self._config_info.imap_password)
+        s = imap_server.select(self._config_info.mail_folder)
         resp, items = imap_server.search(None, 'ALL')
         logging.info('Loop all sended emails.')
         for i in items[0].split():
@@ -195,7 +196,7 @@ class WorkTimeModule:
                 subject = email.Header.decode_header(msg['Subject'])  # 得到一个list
 
                 # output contents
-                times = self.__check_work_overtime(msg['Date'], self.__timelist)
+                times = self.__check_work_overtime(msg['Date'], self._config_info.time_list)
                 if times:
                     if self.__check_name(strfrom):
                         print(strfrom, ",", strdate[5:25], ",", subject[0][0], ",", times)
@@ -213,12 +214,12 @@ class WorkTimeModule:
         if str_date == None or time_list == None:
             return False
         date_for_compare = time.strptime(str_date[5:24], '%d %b %Y %H:%M:%S')
-        month_begin = time.strptime(self.__dayrange[0], "%Y-%m-%d")
-        month_end = time.strptime(self.__dayrange[1], "%Y-%m-%d")
+        month_begin = time.strptime(self._config_info.day_range[0], "%Y-%m-%d")
+        month_end = time.strptime(self._config_info.day_range[1], "%Y-%m-%d")
         date_string = (re.search("\d+:\d+:\d+", str_date)).group(0)
         if date_for_compare > month_begin and date_for_compare < month_end:
-            time1 = time.strptime(self.__timelist[0], "%H:%M:%S")
-            time2 = time.strptime(self.__timelist[1], "%H:%M:%S")
+            time1 = time.strptime(self._config_info.receivers_list[0], "%H:%M:%S")
+            time2 = time.strptime(self._config_info.receivers_list[1], "%H:%M:%S")
             time_list = time.strptime(date_string, "%H:%M:%S")
             if time_list >= time2:
                 return 2
@@ -228,7 +229,7 @@ class WorkTimeModule:
                 return 0
 
     def __check_name(self, name):
-        for single_name in self.__employeelist:
+        for single_name in self._config_info.employee_list:
             name_match_pattern = re.search(r"{0}".format(single_name), name)
             if name_match_pattern:
                 return True
@@ -249,9 +250,9 @@ class WorkTimeModule:
         msgRoot.attach(msg)
 
         smtp = smtplib.SMTP_SSL()
-        smtp.connect(self.__smtphostname)
-        smtp.login(self.__smtpusername, self.__smtppassword)
-        smtp.sendmail(self.__smtpusername, self.__mailtolist, msgRoot.as_string())
+        smtp.connect(self._config_info.smtp_hostname)
+        smtp.login(self._config_info.smtp_username, self._config_info.smtp_password)
+        smtp.sendmail(self._config_info.smtp_username, self._config_info.receivers_list, msgRoot.as_string())
         smtp.quit()
 
     def __del__(self):
@@ -260,13 +261,10 @@ class WorkTimeModule:
 
 if __name__ == '__main__':
     confile = ".configuration.cfg"
-    # logging.info('begin processing...')
-    # logging_settings()
-    # mailobj = WorkTimeModule(confile)
+    logging.info('begin processing...')
+    logging_settings()
+    mail_hdl = WorkTimeModule(confile)
+    print(mail_hdl)
     # mailobj.processing()
     # logging.info("Completed. ")
-
-    config_info = ConfigInfo(confile)
-    print(config_info)
-
 
