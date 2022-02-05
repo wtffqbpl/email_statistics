@@ -132,15 +132,6 @@ class WorkTimeModule:
     def __str__(self):
         return get_obj_str(self._config_info)
 
-    def __my_unicode(self, s, encoding):
-        if encoding:
-            return unicode(s, encoding)
-        else:
-            return unicode(s)
-
-    def __get_charset(self, message, default='ascii'):
-        return message.get_charset
-
     def _get_mail(self, port=993, ssl=1):  # 获取邮件
         if ssl == 1:
             imap_server = imaplib.IMAP4_SSL(self._config_info.imap_hostname, port)
