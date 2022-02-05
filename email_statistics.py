@@ -14,6 +14,15 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.header import Header
 import smtplib
+import logging
+
+
+def logging_settings():
+    log_format = '%(asctime)s %(name)s %(levelname)s %(module)s: %(message)s'
+    logging.basicConfig(filename='email_statistics.log',
+                        format=log_format,
+                        datefmt='%Y-%m-%d %H:%M:%S %p',
+                        level=10)
 
 
 class WorkTimeModule:
@@ -31,11 +40,15 @@ class WorkTimeModule:
         self.__get_param()
         self.__get_mail()
         if self.__sendmail == "True":
+            logging.info('Send info to specified email.')
             self.__send_mail()
 
     def __get_param(self):
         if self.__confile == None:
+            logging.fatal('No configuration file.')
             return
+
+        logging.info("Get configuration info.")
         config = configparser.ConfigParser()
         try:
             config.read([os.path.expanduser(self.__confile)])
@@ -59,8 +72,7 @@ class WorkTimeModule:
             self.__output_file_hdl = file(self.__output_filename, "w")
             self.__write_results("Employee", "Time", "Mail subject", "Counts")
         except Exception as e:
-            print(e)
-            return
+            logging.critical(e)
 
     def __my_unicode(self, s, encoding):
         if encoding:
@@ -76,9 +88,12 @@ class WorkTimeModule:
             imap_server = imaplib.IMAP4_SSL(self.__imaphostname, port)
         else:
             imap_server = imaplib.IMAP4(self.__imaphostname, port)
+
+        logging.info('Login email.')
         imap_server.login(self.__imapusername, self.__imappassword)
         s = imap_server.select(self.__mailfolder)
         resp, items = imap_server.search(None, 'ALL')
+        logging.info('Loop all sended emails.')
         for i in items[0].split():
             resp, data = imap_server.fetch(i, '(RFC822.SIZE BODY[HEADER.FIELDS (SUBJECT FROM DATE)])')
             msg = email.message_from_string(data[0][1])
@@ -103,6 +118,7 @@ class WorkTimeModule:
 
         # close imap server.
         self.__output_file_hdl.close()
+        logging.info("Close email connection.")
         imap_server.close()
         imap_server.logout()
 
@@ -158,6 +174,7 @@ class WorkTimeModule:
 if __name__ == '__main__':
     confile = ".configuration.cfg"
     print('begin processing...')
+    logging_settings()
     mailobj = WorkTimeModule(confile)
     mailobj.processing()
     print("Completed. ")
