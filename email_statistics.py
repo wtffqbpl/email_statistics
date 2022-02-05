@@ -15,6 +15,7 @@ from email.mime.application import MIMEApplication
 from email.header import Header
 import smtplib
 import logging
+import json
 
 
 def logging_settings():
@@ -23,6 +24,92 @@ def logging_settings():
                         format=log_format,
                         datefmt='%Y-%m-%d %H:%M:%S %p',
                         level=10)
+
+
+class ConfigInfo:
+    def __init__(self, config_file='./.configuration.cfg'):
+        self._config = configparser.ConfigParser()
+        self._config.read([os.path.expanduser(config_file)])
+
+    @property
+    def imap_hostname(self):
+        return self._config.get('mailaccountinfo', 'imaphostname')
+
+    @property
+    def imap_username(self):
+        return self._config.get('mailaccountinfo', 'imapusername')
+
+    @property
+    def imap_password(self):
+        return self._config.get('mailaccountinfo', 'imappassword')
+
+    @property
+    def smtp_hostname(self):
+        return self._config.get('mailaccountinfo', 'smtphostname')
+
+    @property
+    def smtp_username(self):
+        return self._config.get('mailaccountinfo', 'smtpusername')
+
+    @property
+    def smtp_password(self):
+        return self._config.get('mailaccountinfo', 'smtppassword')
+
+    @property
+    def mail_folder(self):
+        return self._config.get('mailaccountinfo', 'mailfolder')
+
+    @property
+    def employee_list(self):
+        return self._config.get('employees', 'namelist').split(",")
+
+    @property
+    def receivers_list(self):
+        return self._config.get('mailtolist', 'namelist').split(",")
+
+    @property
+    def time_list(self):
+        time_list = []
+        time_list.append(self._config.get('time', 'time1'))
+        time_list.append(self._config.get('time', 'time2'))
+        return time_list
+
+    @property
+    def day_range(self):
+        day_range = []
+        day_range.append(self._config.get('time', 'day_start'))
+        day_range.append(self._config.get('time', 'day_end'))
+        return day_range
+
+    @property
+    def is_send_email(self):
+        return True if self._config.get('sendmail', 'sendmail') == 'True' else False
+
+    def __str__(self):
+        imap_info, smtp_info, mail_info = {}, {}, {}
+
+        # imap info
+        imap_info['hostname'] = self.imap_hostname
+        imap_info['username'] = self.imap_username
+        imap_info['password'] = self.imap_password
+
+        # smtp info
+        smtp_info['hostname'] = self.smtp_hostname
+        smtp_info['username'] = self.smtp_hostname
+        smtp_info['password'] = self.smtp_password
+
+        # mail info
+        mail_info['mail_folder'] = self.mail_folder
+        mail_info['employee_list'] = self.employee_list
+        mail_info['receivers_list'] = self.receivers_list
+        mail_info['time_range'] = self.time_list
+        mail_info['day_range'] = self.day_range
+        mail_info['is_send'] = self.is_send_email
+
+        config_info = {'imap_info': imap_info,
+                       'smtp_info': smtp_info,
+                       'mail_info': mail_info}
+        return json.dumps(config_info)
 
 
 class WorkTimeModule:
@@ -173,9 +260,13 @@ class WorkTimeModule:
 
 if __name__ == '__main__':
     confile = ".configuration.cfg"
-    print('begin processing...')
-    logging_settings()
-    mailobj = WorkTimeModule(confile)
-    mailobj.processing()
-    print("Completed. ")
+    # logging.info('begin processing...')
+    # logging_settings()
+    # mailobj = WorkTimeModule(confile)
+    # mailobj.processing()
+    # logging.info("Completed. ")
+
+    config_info = ConfigInfo(confile)
+    print(config_info)
+
 
