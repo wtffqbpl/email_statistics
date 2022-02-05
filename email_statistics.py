@@ -119,15 +119,15 @@ class ConfigInfo:
 class WorkTimeModule:
     def __init__(self, confile=None):
         self._config_info = ConfigInfo(confile)
-        self.__output_filename = "output.csv"
-        self.__output_file_hdl = open(self.__output_filename, 'w')
-        self.__write_results('Employee', 'Time', 'Mail subject', 'Counts')
+        self._output_filename = "output.csv"
+        self._output_file_hdl = open(self._output_filename, 'w')
+        self._write_results('Employee', 'Time', 'Mail subject', 'Counts')
 
     def processing(self):
-        self.__get_mail()
+        self._get_mail()
         if self._config_info.is_send_email:
             logging.info('Send info to specified email.')
-            self.__send_mail()
+            self._send_mail()
 
     def __str__(self):
         return get_obj_str(self._config_info)
@@ -141,7 +141,7 @@ class WorkTimeModule:
     def __get_charset(self, message, default='ascii'):
         return message.get_charset
 
-    def __get_mail(self, port=993, ssl=1):  # 获取邮件
+    def _get_mail(self, port=993, ssl=1):  # 获取邮件
         if ssl == 1:
             imap_server = imaplib.IMAP4_SSL(self._config_info.imap_hostname, port)
         else:
@@ -166,21 +166,21 @@ class WorkTimeModule:
                 subject = email.Header.decode_header(msg['Subject'])  # 得到一个list
 
                 # output contents
-                times = self.__check_work_overtime(msg['Date'], self._config_info.time_list)
+                times = self._check_work_overtime(msg['Date'], self._config_info.time_list)
                 if times:
-                    if self.__check_name(strfrom):
+                    if self._check_name(strfrom):
                         print(strfrom, ",", strdate[5:25], ",", subject[0][0], ",", times)
-                        self.__write_results(strfrom, strdate[5:25], subject[0][0], str(times))
+                        self._write_results(strfrom, strdate[5:25], subject[0][0], str(times))
             except Exception as e:
                 print(e)
 
         # close imap server.
-        self.__output_file_hdl.close()
+        self._output_file_hdl.close()
         logging.info("Close email connection.")
         imap_server.close()
         imap_server.logout()
 
-    def __check_work_overtime(self, str_date=None, time_list=None):
+    def _check_work_overtime(self, str_date=None, time_list=None):
         if str_date == None or time_list == None:
             return False
         date_for_compare = time.strptime(str_date[5:24], '%d %b %Y %H:%M:%S')
@@ -198,19 +198,19 @@ class WorkTimeModule:
             else:
                 return 0
 
-    def __check_name(self, name):
+    def _check_name(self, name):
         for single_name in self._config_info.employee_list:
             name_match_pattern = re.search(r"{0}".format(single_name), name)
             if name_match_pattern:
                 return True
         return False
 
-    def __write_results(self, employee_name, work_date, mail_subject, times):
-        self.__output_file_hdl.write(employee_name + "," + work_date + "," + mail_subject + "," + times + "\n")
+    def _write_results(self, employee_name, work_date, mail_subject, times):
+        self._output_file_hdl.write(employee_name + "," + work_date + "," + mail_subject + "," + times + "\n")
 
-    def __send_mail(self):
-        att = MIMEApplication(open(self.__output_filename, 'rb').read())
-        att.add_header('Content-Disposition', 'attachment', filename=self.__output_filename)
+    def _send_mail(self):
+        att = MIMEApplication(open(self._output_filename, 'rb').read())
+        att.add_header('Content-Disposition', 'attachment', filename=self._output_filename)
 
         msg = MIMEText("Please check attachment")
 
