@@ -53,7 +53,17 @@ def get_obj_str(obj):
     return json.dumps(config_info)
 
 
-class ConfigInfo:
+class SingletonMeta(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+        return cls._instances[cls]
+
+
+class ConfigInfo(metaclass=SingletonMeta):
     def __init__(self, config_file='./.configuration.cfg'):
         self._config = configparser.ConfigParser()
         self._config.read([os.path.expanduser(config_file)])
@@ -228,6 +238,7 @@ if __name__ == '__main__':
     # print(mail_hdl)
     # mailobj.processing()
     # logging.info("Completed. ")
-    print(ConfigInfo(confile))
+    config_info = ConfigInfo('.configuration.cfg')
+    print(config_info)
     print(WorkTimeModule(confile))
 
