@@ -4,7 +4,7 @@
 import imaplib
 import email
 import sys
-import ConfigParser
+import configparser
 import os
 import datetime
 import time
@@ -14,12 +14,6 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.header import Header
 import smtplib
-
-reload(sys)
-sys.setdefaultencoding('gbk')
-
-
-# sys.setdefaultencoding('gb2312')
 
 
 class WorkTimeModule:
@@ -41,8 +35,8 @@ class WorkTimeModule:
 
     def __get_param(self):
         if self.__confile == None:
-            return 0
-        config = ConfigParser.ConfigParser()
+            return
+        config = configparser.ConfigParser()
         try:
             config.read([os.path.expanduser(self.__confile)])
             self.__imaphostname = config.get('mailaccountinfo', 'imaphostname')
@@ -64,9 +58,9 @@ class WorkTimeModule:
             self.__output_filename = "output.csv"
             self.__output_file_hdl = file(self.__output_filename, "w")
             self.__write_results("Employee", "Time", "Mail subject", "Counts")
-        except Exception, e:
+        except Exception as e:
             print(e)
-            return 0
+            return
 
     def __my_unicode(self, s, encoding):
         if encoding:
@@ -104,8 +98,8 @@ class WorkTimeModule:
                     if self.__check_name(strfrom):
                         print(strfrom, ",", strdate[5:25], ",", subject[0][0], ",", times)
                         self.__write_results(strfrom, strdate[5:25], subject[0][0], str(times))
-            except:
-                pass
+            except Exception as e:
+                print(e)
 
         # close imap server.
         self.__output_file_hdl.close()
