@@ -26,6 +26,33 @@ def logging_settings():
                         level=10)
 
 
+def get_obj_str(obj):
+    imap_info, smtp_info, mail_info = {}, {}, {}
+
+    # imap info
+    imap_info['hostname'] = obj.imap_hostname
+    imap_info['username'] = obj.imap_username
+    imap_info['password'] = obj.imap_password
+
+    # smtp info
+    smtp_info['hostname'] = obj.smtp_hostname
+    smtp_info['username'] = obj.smtp_hostname
+    smtp_info['password'] = obj.smtp_password
+
+    # mail info
+    mail_info['mail_folder'] = obj.mail_folder
+    mail_info['employee_list'] = obj.employee_list
+    mail_info['receivers_list'] = obj.receivers_list
+    mail_info['time_range'] = obj.time_list
+    mail_info['day_range'] = obj.day_range
+    mail_info['is_send'] = obj.is_send_email
+
+    config_info = {'imap_info': imap_info,
+                    'smtp_info': smtp_info,
+                    'mail_info': mail_info}
+    return json.dumps(config_info)
+
+
 class ConfigInfo:
     def __init__(self, config_file='./.configuration.cfg'):
         self._config = configparser.ConfigParser()
@@ -86,30 +113,7 @@ class ConfigInfo:
         return True if self._config.get('sendmail', 'sendmail') == 'True' else False
 
     def __str__(self):
-        imap_info, smtp_info, mail_info = {}, {}, {}
-
-        # imap info
-        imap_info['hostname'] = self.imap_hostname
-        imap_info['username'] = self.imap_username
-        imap_info['password'] = self.imap_password
-
-        # smtp info
-        smtp_info['hostname'] = self.smtp_hostname
-        smtp_info['username'] = self.smtp_hostname
-        smtp_info['password'] = self.smtp_password
-
-        # mail info
-        mail_info['mail_folder'] = self.mail_folder
-        mail_info['employee_list'] = self.employee_list
-        mail_info['receivers_list'] = self.receivers_list
-        mail_info['time_range'] = self.time_list
-        mail_info['day_range'] = self.day_range
-        mail_info['is_send'] = self.is_send_email
-
-        config_info = {'imap_info': imap_info,
-                       'smtp_info': smtp_info,
-                       'mail_info': mail_info}
-        return json.dumps(config_info)
+        return get_obj_str(self)
 
 
 class WorkTimeModule:
@@ -126,30 +130,7 @@ class WorkTimeModule:
             self.__send_mail()
 
     def __str__(self):
-        imap_info, smtp_info, mail_info = {}, {}, {}
-
-        # imap info
-        imap_info['hostname'] = self._config_info.imap_hostname
-        imap_info['username'] = self._config_info.imap_username
-        imap_info['password'] = self._config_info.imap_password
-
-        # smtp info
-        smtp_info['hostname'] = self._config_info.smtp_hostname
-        smtp_info['username'] = self._config_info.smtp_username
-        smtp_info['password'] = self._config_info.smtp_password
-
-        # mail info
-        mail_info['mail_folder'] = self._config_info.mail_folder
-        mail_info['employee_list'] = self._config_info.employee_list
-        mail_info['receivers_list'] = self._config_info.receivers_list
-        mail_info['time_range'] = self._config_info.time_list
-        mail_info['day_range'] = self._config_info.day_range
-        mail_info['is_send'] = self._config_info.is_send_email
-
-        config_info = {'imap_info': imap_info,
-                       'smtp_info': smtp_info,
-                       'mail_info': mail_info}
-        return json.dumps(config_info)
+        return get_obj_str(self._config_info)
 
     def __my_unicode(self, s, encoding):
         if encoding:
@@ -250,10 +231,12 @@ class WorkTimeModule:
 
 if __name__ == '__main__':
     confile = ".configuration.cfg"
-    logging.info('begin processing...')
-    logging_settings()
-    mail_hdl = WorkTimeModule(confile)
-    print(mail_hdl)
+    # logging_settings()
+    # logging.info('begin processing...')
+    # mail_hdl = WorkTimeModule(confile)
+    # print(mail_hdl)
     # mailobj.processing()
     # logging.info("Completed. ")
+    print(ConfigInfo(confile))
+    print(WorkTimeModule(confile))
 
